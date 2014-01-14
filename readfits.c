@@ -572,8 +572,6 @@ int read_std ( char *name, int subint, double *profile, int nphase, int mode, in
 	{
 		fitsfile *fptr;       // pointer to the FITS file, defined in fitsio.h 
 		int status;
-		int colnum;
-		long int nrows;
 
 		status = 0;
 

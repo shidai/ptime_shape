@@ -165,8 +165,6 @@ int remove_baseline (double *in, double frac_off, int n, double *out)
     printf ("the baseline of std is: %lf \n", baseline);
     //printf ("average is: %lf %lf\n", average, average_s);
 
-	double s_norm[n];
-
 	for (i = 0; i < n; i++)
 	{
 		out[i] = (in[i]-baseline);
@@ -468,7 +466,6 @@ int real_obs (char *fname, char *tname, char *oname, int mode, FILE *fp, double 
 
 		double p_multi[nchn*npol*nphase];
 		double p_temp[nphase];
-		double p_new[nphase];
 
 		// start to calculate shape paremeter for different subint
 		for (h = 1; h <= nsub; h++)
