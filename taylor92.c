@@ -182,10 +182,10 @@ int align (int N, double phase, double b, double *real_p, double *real_p_align, 
 		// add phase shift to the profile, phase
 		//real_p_align[i]=amp*(cosina)/b;
 		//ima_p_align[i]=amp*(sina)/b;
-		real_p_align[i]=amp*(cosina*cos(-i*phase)-sina*sin(-i*phase));
-		ima_p_align[i]=amp*(sina*cos(-i*phase)+cosina*sin(-i*phase));
-		//real_p_align[i]=amp*(cosina*cos(-i*phase)-sina*sin(-i*phase))/b;
-		//ima_p_align[i]=amp*(sina*cos(-i*phase)+cosina*sin(-i*phase))/b;
+		//real_p_align[i]=amp*(cosina*cos(-i*phase)-sina*sin(-i*phase));
+		//ima_p_align[i]=amp*(sina*cos(-i*phase)+cosina*sin(-i*phase));
+		real_p_align[i]=amp*(cosina*cos(-i*phase)-sina*sin(-i*phase))/b;
+		ima_p_align[i]=amp*(sina*cos(-i*phase)+cosina*sin(-i*phase))/b;
 		
 	}
 
@@ -271,7 +271,7 @@ int inverse_dft (double *real_p, double *ima_p, int ncount, double *p_new)
 	return 0;
 }
 
-int get_toa (double *s, double *p, double *p_new, double psrfreq, int nphase)
+int get_toa (double *s, double *p, double *p_new, double psrfreq, int nphase, long int mjd, int nchan, int npol, int nsub, char *fname)
 // calculate the phase shift between template and simulated (or real) data 
 // error of phase can be calculated
 // initial guess of phase shift is added
@@ -350,13 +350,44 @@ int get_toa (double *s, double *p, double *p_new, double psrfreq, int nphase)
 	align (nphase, phase, b, real_p, real_p_align, ima_p, ima_p_align);
 	inverse_dft (real_p_align, ima_p_align, nphase, p_new);
 
-	/*
+	// open file to write toa 
+	char channel[] = "_nchn_";
+	char pol[] = "_npol_";
+	char sub[] = "_nsub_";
+	char c1[20], c2[10], c3[10], c4[10]; 
+
+	char output[100];
+
+	sprintf (c1, "%ld", mjd);
+	sprintf (c2, "%d", nsub);
+	sprintf (c3, "%d", nchan);
+	sprintf (c4, "%d", npol);
+
+	strcpy(output, fname);
+	strcat(output, "_");
+	strcat(output, c1);
+	strcat(output, sub);
+	strcat(output, c2);
+	strcat(output, channel);
+	strcat(output, c3);
+	strcat(output, pol);
+	strcat(output, c4);
+
+	FILE *fp;
+	if ((fp = fopen(output, "w+")) == NULL)
+	{
+        fprintf (stdout, "Can't open file\n");
+		exit(1);
+	}
+
 	int i;
 	for (i = 0; i < nphase; i++)
 	{
-		printf ("%lf %lf %lf\n", p_new[i], p[i], s[i]);
+		fprintf (fp, "%d %lf %lf\n", i, s[i], p_new[i]);
 	}
-	*/
+
+    if (fclose (fp) != 0)
+		fprintf (stderr, "Error closing\n");
 
 	return 0;
 }

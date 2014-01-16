@@ -222,7 +222,7 @@ int error (double *p_off, double *s_on, int num_on, int num_off, double *err)
 	return 0;
 }
 
-int shape_para (double *s, double *p, int nphase, double frac_on, double frac_off, FILE *fp, double psrfreq, long int mjd, int nchn, int npol)
+int shape_para (double *s, double *p, int nphase, double frac_on, double frac_off, FILE *fp, double psrfreq, long int mjd, int nchn, int npol, int nsub, char *fname)
 {
 	int n = nphase;
 	
@@ -267,7 +267,7 @@ int shape_para (double *s, double *p, int nphase, double frac_on, double frac_of
 	on_pulse(n, s_peak_position, s_norm, s_on, frac_on);
 	on_pulse(n, p_peak_position, p_nobase, p_on_0, frac_on);
 
-	get_toa (s_on, p_on_0, p_on, psrfreq, num_on);
+	get_toa (s_on, p_on_0, p_on, psrfreq, num_on, mjd, nchn, npol, nsub, fname);
 	//printf ("///////////////////\n");
 
 	/*
@@ -497,7 +497,7 @@ int real_obs (char *fname, char *tname, char *oname, int mode, FILE *fp, double 
 						//fprintf (fp, "%d %d %lf\n", i, j, p_temp[j]);
 					}
 					//get_toa (s_temp, p_temp, p_new, psrfreq, nphase);
-					shape_para(s_temp, p_temp, nphase, frac_on, frac_off, fp, psrfreq, imjd, i, p);
+					shape_para(s_temp, p_temp, nphase, frac_on, frac_off, fp, psrfreq, imjd, i, p, h, fname);
 				}
 			}
 		}
