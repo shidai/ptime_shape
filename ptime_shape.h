@@ -43,8 +43,8 @@ int shape_para (double *s, double *p, int nphase, double frac_on, double frac_of
 
 int real_obs (char *fname, char *tname, char *oname, int mode, FILE *fp, double frac_on, double frac_off);
 
-int simulate (int n, double SNR, double *s, double *p);
-int sim_obs (char *tname, char *oname, int mode, double SNR, FILE *fp, double psrfreq);
+//int simulate (int n, double SNR, double *s, double *p);
+//int sim_obs (char *tname, char *oname, int mode, double SNR, FILE *fp, double psrfreq);
 
 /////////////////////////////////////////////////////////////////
 //

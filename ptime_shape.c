@@ -96,7 +96,7 @@ int main (int argc, char *argv[])
 		for (SNR = 100.0; SNR < 1000.0; SNR += 100.0)
 		{
 			printf ("SNR: %lf\n", SNR);
-			sim_obs (tname, oname, mode, SNR, fp, 1000);
+			//sim_obs (tname, oname, mode, SNR, fp, 1000);
 		}
 	}
 

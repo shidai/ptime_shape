@@ -503,6 +503,7 @@ int real_obs (char *fname, char *tname, char *oname, int mode, FILE *fp, double 
 	return 0;
 }
 
+/*
 int simulate (int n, double SNR, double *s, double *p)
 {
 	// simulate a profile with white noise
@@ -643,3 +644,4 @@ int sim_obs (char *tname, char *oname, int mode, double SNR, FILE *fp, double ps
 
 	return 0;
 }
+*/
