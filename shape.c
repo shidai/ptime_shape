@@ -349,7 +349,7 @@ int shape_para (double *s, double *p, int nphase, double frac_on, double frac_of
 
     for (i = 0; i < num_on; i++)
     {
-		printf ("%d %lf %lf \n", i, s_on[i]-s_bar, p_on[i]-p_bar);
+		//printf ("%d %lf %lf \n", i, s_on[i]-s_bar, p_on[i]-p_bar);
 		ro1 += (s_on[i] - s_bar)*(p_on[i] - p_bar);
         ro21 += (s_on[i] - s_bar)*(s_on[i] - s_bar);
         ro22 += (p_on[i] - p_bar)*(p_on[i] - p_bar);
@@ -420,7 +420,7 @@ int real_obs (char *fname, char *tname, char *oname, int mode, FILE *fp, double 
 
 	/////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////////
-	int h, i, j;
+	int h, i, j, p;
 	{
 		// name of different extension
 		strcpy(name_data,fname);
@@ -458,9 +458,9 @@ int real_obs (char *fname, char *tname, char *oname, int mode, FILE *fp, double 
 		//read_prof(std,1,s_multi,nphase);
 	
 		// check the channel and phase number of template
-		check_std(std,1,mode,nchn,nphase);
+		check_std(std,1,mode,nchn,nphase,npol);
 
-		read_std(std,1,s_multi,nphase,mode,nchn);
+		read_std(std,1,s_multi,nphase,mode,nchn,npol);
 
 		////////////////////////////////////////////////////////////////////////////////
 
@@ -482,16 +482,20 @@ int real_obs (char *fname, char *tname, char *oname, int mode, FILE *fp, double 
 			// start to calculate shape parameter for different channels
 			for (i = 0; i < nchn; i++)
 			{
-				for (j = 0; j < nphase; j++)
+				for (p = 0; p < npol; p++)
 				{
-					//printf ("%lf %lf\n", p_multi[j], s[j]);
-					//s_multi[i*nphase + j] = s[j];
-					p_temp[j] = p_multi[i*nphase + j];
-					s_temp[j] = s_multi[i*nphase + j];
-					//fprintf (fp, "%d %d %lf\n", i, j, p_temp[j]);
+					for (j = 0; j < nphase; j++)
+					{
+						//printf ("%lf %lf\n", p_multi[j], s[j]);
+						//s_multi[i*nphase + j] = s[j];
+						p_temp[j] = p_multi[i*npol*nphase + p*nphase + j];
+						s_temp[j] = s_multi[i*npol*nphase + p*nphase + j];
+						//s_temp[j] = s_multi[i*nphase + j];
+						//fprintf (fp, "%d %d %lf\n", i, j, p_temp[j]);
+					}
+					//get_toa (s_temp, p_temp, p_new, psrfreq, nphase);
+					shape_para(s_temp, p_temp, nphase, frac_on, frac_off, fp, psrfreq);
 				}
-				//get_toa (s_temp, p_temp, p_new, psrfreq, nphase);
-				shape_para(s_temp, p_temp, nphase, frac_on, frac_off, fp, psrfreq);
 			}
 		}
 	}
@@ -583,7 +587,7 @@ int sim_obs (char *tname, char *oname, int mode, double SNR, FILE *fp, double ps
 
 	/////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////////
-	int h, i, j;
+	int h, i, j, p;
 	{
 		////////////////////////////////////////////////////
 
@@ -597,7 +601,7 @@ int sim_obs (char *tname, char *oname, int mode, double SNR, FILE *fp, double ps
 		// check the channel and phase number of template
 		//check_std(std,1,mode,nchn,nphase);
 
-		read_std(std,1,s_multi,nphase,mode,nchn);
+		read_std(std,1,s_multi,nphase,mode,nchn,npol);
 
 		////////////////////////////////////////////////////////////////////////////////
 
@@ -619,16 +623,20 @@ int sim_obs (char *tname, char *oname, int mode, double SNR, FILE *fp, double ps
 			// start to calculate shape parameter for different channels
 			for (i = 0; i < nchn; i++)
 			{
-				for (j = 0; j < nphase; j++)
+				for (p = 0; p < npol; p++)
 				{
-					//printf ("%lf %lf\n", p_multi[j], s[j]);
-					//s_multi[i*nphase + j] = s[j];
-					s_temp[j] = s_multi[i*nphase + j];
-					//fprintf (fp, "%d %d %lf\n", i, j, p_temp[j]);
+					for (j = 0; j < nphase; j++)
+					{
+						//printf ("%lf %lf\n", p_multi[j], s[j]);
+						//s_multi[i*nphase + j] = s[j];
+						//s_temp[j] = s_multi[i*nphase + j];
+						s_temp[j] = s_multi[i*npol*nphase + p*nphase + j];
+						//fprintf (fp, "%d %d %lf\n", i, j, p_temp[j]);
+					}
+					simulate(nphase, SNR, s_temp, p_temp);
+					shape_para(s_temp, p_temp, nphase, 0.8, 0.2, fp, psrfreq);
+					//printf ("%d %d\n", nphase, nchn);
 				}
-				simulate(nphase, SNR, s_temp, p_temp);
-				shape_para(s_temp, p_temp, nphase, 0.8, 0.2, fp, psrfreq);
-				//printf ("%d %d\n", nphase, nchn);
 			}
 		}
 	}

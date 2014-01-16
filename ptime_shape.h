@@ -24,11 +24,11 @@ int read_value ( char *name, int subint, double *value, int nphase, int nchan, i
 
 int read_prof ( char *name, int subint, double *profile, int nphase, int npol, int nchan);
 
-int check_std ( char *name, int subint, int mode, int nchn, int nphase);
+int check_std ( char *name, int subint, int mode, int nchn, int nphase, int npol);
 
-int read_std_pt ( char *name, double *profile, int nphase, int nchn);
+int read_std_pt ( char *name, double *profile, int nphase, int nchn, int npol);
 
-int read_std ( char *name, int subint, double *profile, int nphase, int mode, int nchn);
+int read_std ( char *name, int subint, double *profile, int nphase, int mode, int nchn, int npol);
 
 int find_peak (int n, double *s, int *position);
 double find_peak_value (int n, double *s);

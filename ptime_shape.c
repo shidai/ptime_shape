@@ -1,6 +1,8 @@
-//"Usage: ptime_shape -f fname -std tname (-pt tname) -o oname \n"
+//"Usage: ptime_shape -f fname -std tname (-pt tname) -o oname -frac_on 0.5 -frac_off 0.5\n"
 //"Calculate the shape parameter\n"
-//fname: data file; tname: templates; oname: output .tim; -std: standard template format; -pt: ptime template;\n"
+//-fname: data file; tname: templates; oname: output .tim; -std: standard template format; -pt: ptime template;\n"
+//-frac_on: fraction of the on-pulse phase; -frac_off: fraction of the off-pulse phase;\n"
+//-sim: simulate profile 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

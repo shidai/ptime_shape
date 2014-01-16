@@ -383,7 +383,6 @@ int read_value ( char *name, int subint, double *value, int nphase, int nchan, i
 //int main ( int argc, char *argv[] )
 int read_prof ( char *name, int subint, double *profile, int nphase, int npol, int nchan)
 {  
-	// currently, npol should be 1
 	double value[nphase*npol*nchan];
 	double scl[npol*nchan];
 	double offs[npol*nchan];
@@ -392,25 +391,27 @@ int read_prof ( char *name, int subint, double *profile, int nphase, int npol, i
 	read_offs (name, subint, offs, nchan, npol);
 	read_scl (name, subint, scl, nchan, npol);
 
-	int i,j;
+	int i,j,h;
     for (i = 0; i < nchan; i++)                             // print the results
 	{
-		for (j = 0; j < nphase; j++)                             // print the results
+		for (h = 0; h < npol; h++)                             // print the results
 		{
-			profile[i*nphase+j] = value[i*nphase+j]*scl[i] + offs[i];
-			//profile[i*nphase+j] = value[i*nphase+j];
-		    //printf("%d %lf \n", i, profile[i]);
+			for (j = 0; j < nphase; j++)                             // print the results
+			{
+				profile[i*npol*nphase+h*nphase+j] = value[i*npol*nphase+h*nphase+j]*scl[i*npol+h] + offs[i*npol+h];
+				//profile[i*nphase+j] = value[i*nphase+j];
+				//printf("%d %lf \n", i, profile[i]);
+			}
 		}
 	}
 
     return 0;
 }
 
-int check_std ( char *name, int subint, int mode, int nchn, int nphase)
-// check if the template has right number of channel and nphase, and return the number of channel
+int check_std ( char *name, int subint, int mode, int nchn, int nphase, int npol)
+// check if the template has right number of channel, polarization and nphase
 {  
-	// currently, npol should be 1
-	// nchn is the number of channel of the data profile
+	// nchn and npol are the number of channel and polarization of the data profile
 	if (mode == 0)
 	{
 		fitsfile *fptr;       // pointer to the FITS file, defined in fitsio.h 
@@ -432,8 +433,8 @@ int check_std ( char *name, int subint, int mode, int nchn, int nphase)
 		//printf ("%d\n", colnum);
 
 		//////////////////////////////////////////////////////////////////////////
-		int npol;
-		if ( fits_read_key(fptr, TINT, (char *)"NPOL", &npol, NULL, &status) )           // get the pol number
+		int npola;
+		if ( fits_read_key(fptr, TINT, (char *)"NPOL", &npola, NULL, &status) )           // get the pol number
 		{
 			printf( "error while getting the npol number\n" );
 			//fits_get_colnum(fptr, CASEINSEN, "DATA", &colnum, &status);
@@ -472,7 +473,6 @@ int check_std ( char *name, int subint, int mode, int nchn, int nphase)
 			exit (0);
 		}
 
-		// output the template
 		// check if nchan = nchn
 		if ( nchan == nchn )
 		{
@@ -493,6 +493,16 @@ int check_std ( char *name, int subint, int mode, int nchn, int nphase)
 			}
 		}
 
+		// check if npola = npol
+		if ( npola == npol )
+		{
+			printf ("The polarization number of template = the polarization number of data\n");
+		}
+		else 
+		{
+			printf ("The polarization number of template != the polarization number of data\n");
+			exit (0);
+		}
 
 	}
 	else if (mode == 1)
@@ -521,14 +531,26 @@ int check_std ( char *name, int subint, int mode, int nchn, int nphase)
 				printf ("The template has only one channel. The same template will be used for all channels.\n");
 			}
 		}
+		int npola;
+		npola = tmpl.channel[0].nstokes;
 
+		// check if npola = npol
+		if ( npola == npol)
+		{
+			printf ("The polarization number of template = the polarization number of data\n");
+		}
+		else 
+		{
+			printf ("The polarization number of template != the polarization number of data\n");
+			exit (0);
+		}
 
 	}
 
 	return 0;
 }
 
-int read_std_pt ( char *name, double *profile, int nphase, int nchn)
+int read_std_pt ( char *name, double *profile, int nphase, int nchn, int npol)
 {  
 	// currently, npol should be 1
 	// nchn is the number of channel of the data profile
@@ -538,14 +560,26 @@ int read_std_pt ( char *name, double *profile, int nphase, int nchn)
 	readTemplate_ptime(name,&tmpl);
     printf("Complete reading template\n");
 
-	int i,j;
+	int npola;
+	npola = tmpl.channel[0].nstokes;
+
+	if ( npola != npol)
+	{
+		printf ("The polarization number of template != the polarization number of data\n");
+		exit (0);
+	}
+
+	int i,j,h;
 	double phi;
 	for (i = 0; i < tmpl.nchan; i++)
 	{
-		for (j = 0; j < nphase; j++)
+		for (h = 0; h < npol; h++)
 		{
-			phi = j/(double)nphase;
-			profile[i*nphase+j] = (double)evaluateTemplateChannel(&tmpl,phi,i,0,0);
+			for (j = 0; j < nphase; j++)
+			{
+				phi = j/(double)nphase;
+				profile[i*npol*nphase+h*nphase+j] = (double)evaluateTemplateChannel(&tmpl,phi,i,h,0);
+			}
 		}
 	}
 
@@ -553,9 +587,9 @@ int read_std_pt ( char *name, double *profile, int nphase, int nchn)
 	{
 		for (i = 1; i < nchn; i++)
 		{
-			for (j = 0; j < nphase; j++)
+			for (j = 0; j < npol*nphase; j++)
 			{
-				profile[i*nphase+j] = profile[j];
+				profile[i*npol*nphase+j] = profile[j];
 			}
 		}
 	}
@@ -563,7 +597,7 @@ int read_std_pt ( char *name, double *profile, int nphase, int nchn)
 	return 0;
 }
 
-int read_std ( char *name, int subint, double *profile, int nphase, int mode, int nchn)
+int read_std ( char *name, int subint, double *profile, int nphase, int mode, int nchn, int npol)
 {  
 	int i,j;
 	// currently, npol should be 1
@@ -582,8 +616,8 @@ int read_std ( char *name, int subint, double *profile, int nphase, int mode, in
 		}
 
 		//////////////////////////////////////////////////////////////////////////
-		int npol;
-		if ( fits_read_key(fptr, TINT, (char *)"NPOL", &npol, NULL, &status) )           // get the pol number
+		int npola;
+		if ( fits_read_key(fptr, TINT, (char *)"NPOL", &npola, NULL, &status) )           // get the pol number
 		{
 			printf( "error while getting the npol number\n" );
 			//fits_get_colnum(fptr, CASEINSEN, "DATA", &colnum, &status);
@@ -593,7 +627,7 @@ int read_std ( char *name, int subint, double *profile, int nphase, int mode, in
 		int nchan;
 		if ( fits_read_key(fptr, TINT, (char *)"NCHAN", &nchan, NULL, &status) )           // get the chan number
 		{
-			printf( "error while getting the npol number\n" );
+			printf( "error while getting the nchan number\n" );
 			//fits_get_colnum(fptr, CASEINSEN, "DATA", &colnum, &status);
 		}
 		//printf ("%d\n", nchan);
@@ -604,23 +638,29 @@ int read_std ( char *name, int subint, double *profile, int nphase, int mode, in
 			printf( " error while closing the file\n" );
 		}
 
+		if (npola != npol)
+		{
+			printf ("The polarization number of template != the polarization number of data\n");
+			exit (0);
+		}
+
 		// read the data
-		read_prof (name, subint, profile, nphase, npol, nchan);
+		read_prof (name, subint, profile, nphase, npola, nchan);
 
 		if ( nchan == 1 )
 		{
 			for (i = 1; i < nchn; i++)
 			{
-				for (j = 0; j < nphase; j++)
+				for (j = 0; j < npol*nphase; j++)
 				{
-					profile[i*nphase+j] = profile[j];
+					profile[i*npol*nphase+j] = profile[j];
 				}
 			}
 		}
 	}
 	else if (mode == 1)
 	{
-		read_std_pt (name, profile, nphase, nchn);
+		read_std_pt (name, profile, nphase, nchn, npol);
 	}
 
 	return 0;
