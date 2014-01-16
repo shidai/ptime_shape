@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_randist.h>
+//#include <gsl/gsl_rng.h>
+//#include <gsl/gsl_randist.h>
 #include "ptime_shape.h"
 
 int find_peak (int n, double *s, int *position)
@@ -222,7 +222,7 @@ int error (double *p_off, double *s_on, int num_on, int num_off, double *err)
 	return 0;
 }
 
-int shape_para (double *s, double *p, int nphase, double frac_on, double frac_off, FILE *fp, double psrfreq)
+int shape_para (double *s, double *p, int nphase, double frac_on, double frac_off, FILE *fp, double psrfreq, long int mjd, int nchn, int npol)
 {
 	int n = nphase;
 	
@@ -396,7 +396,7 @@ int shape_para (double *s, double *p, int nphase, double frac_on, double frac_of
     //fprintf (fp, "The shape parameter is: %f\n", shape_para);
     //fprintf (fp, "The theoretical shape parameter is: %f\n", shape_para_std);
     //fprintf (fp, "%lf %lf %.10lf\n", shape_para_std, shape_para, err);
-    fprintf (fp, "%.3lf %.3lf %.3lf %.8lf\n", shape_para_std, shape_para, shape_para_test, err);
+    fprintf (fp, "%ld %d %d %.3lf %.3lf %.3lf %.10lf\n", mjd, nchn, npol, shape_para_std, shape_para, shape_para_test, err);
 
     return 0;
 }
@@ -436,6 +436,9 @@ int real_obs (char *fname, char *tname, char *oname, int mode, FILE *fp, double 
 		printf ("PSR frequency: %.15lf\n", psrfreq);
 
 		////////////////////////////////////////////////////
+
+		long int imjd;
+		imjd = stt_imjd(fname);
 	
 		int nphase;
 		int nchn;
@@ -494,7 +497,7 @@ int real_obs (char *fname, char *tname, char *oname, int mode, FILE *fp, double 
 						//fprintf (fp, "%d %d %lf\n", i, j, p_temp[j]);
 					}
 					//get_toa (s_temp, p_temp, p_new, psrfreq, nphase);
-					shape_para(s_temp, p_temp, nphase, frac_on, frac_off, fp, psrfreq);
+					shape_para(s_temp, p_temp, nphase, frac_on, frac_off, fp, psrfreq, imjd, i, p);
 				}
 			}
 		}

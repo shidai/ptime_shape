@@ -11,6 +11,7 @@
 #define NP 2048
 #define PI 3.14159265359
 
+long int stt_imjd ( char *name );
 double read_psrfreq ( char *name );
 
 int get_nchan ( char *name );
@@ -39,7 +40,7 @@ int off_pulse (int nphase, double *in, double *out, double frac);
 int remove_baseline (double *in, double frac_off, int n, double *out);
 
 int error (double *p_off, double *s_on, int num_on, int num_off, double *err);
-int shape_para (double *s, double *p, int nphase, double frac_on, double frac_off, FILE *fp, double psrfreq);
+int shape_para (double *s, double *p, int nphase, double frac_on, double frac_off, FILE *fp, double psrfreq, long int mjd, int nchn, int npol);
 
 int real_obs (char *fname, char *tname, char *oname, int mode, FILE *fp, double frac_on, double frac_off);
 
