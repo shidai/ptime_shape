@@ -73,65 +73,81 @@ int on_pulse (int nphase, int peak_position, double *in, double *out, double fra
 	int i;
 	for (i = 0; i < num; i++)
 	{
-		if ((peak_position-num/2+i) < 0)
+		if ((peak_position-(int)(num/2)+i) < 0)
 		{
-			out[i] = in[(n-1)+(peak_position-num/2+i)];
+			out[i] = in[(n-1)+(peak_position-(int)(num/2)+i)];
 		}
-		else if ((peak_position-num/2+i) > n-1)
+		else if ((peak_position-(int)(num/2)+i) > n-1)
 		{
-			out[i] = in[(peak_position-num/2+i)-(n-1)];
+			out[i] = in[(peak_position-(int)(num/2)+i)-(n-1)];
 		}
 		else
 		{
-			out[i] = in[peak_position-num/2+i];
+			out[i] = in[peak_position-(int)(num/2)+i];
 		}
 	}
 
 	return 0;
 }
 
-int off_pulse (int nphase, double *in, double *out, double frac)
+int off_pulse (int nphase, int peak_position, double *in, double *out, double frac_off, double frac_on)
 // define the on_pulse range, 10% of the phase
 {
 	int n = nphase;
-	int num = (int)(n*frac);
+	int num_off = (int)(n*frac_off);
+	int num_on = (int)(n*frac_on);
 	int i,j;
 	double small;
-	double ave;
+	double temp;
 	int index = 0;
+
+	double ave;
+	ave = 0.0;
+	for (i = 0; i < num_off; i++)
+	{
+		if ((peak_position+(int)(num_on/2)+i) > n-1)
+		{
+			ave += in[(peak_position+(int)(num_on/2)+i)-(n-1)];
+		}
+		else
+		{
+			ave += in[peak_position+(int)(num_on/2)+i];
+		}
+	}
+	ave = ave/num_off;
 
 	for (i = 0; i < n; i++)
 	{
 		if (i == 0)
 		{
 			small = 0.0;
-			for(j = 0; j < num; j++)
+			for(j = 0; j < num_off; j++)
 			{
-				small += in[j];
+				small += (in[j]-ave)*(in[j]-ave);
 			}
-			small = fabs(small/num);
+			small = sqrt(small/num_off);
 		}
 			
-		ave = 0.0;
-		for(j = 0; j < num; j++)
+		temp = 0.0;
+		for(j = 0; j < num_off; j++)
 		{
 			if ((i+j) > n-1)
 			{
-				ave += in[(i+j)-(n-1)];
+				temp += (in[(i+j)-(n-1)]-ave)*(in[(i+j)-(n-1)]-ave);
 			}
 			else 
 			{
-				ave += in[i+j];
+				temp += (in[i+j]-ave)*(in[i+j]-ave);
 			}
 		}
-		ave = fabs(ave/num);
+		temp = sqrt(temp/num_off);
 
-		small = (ave <= small ? ave : small);
-		index = (ave <= small ? i : index);
+		small = (temp <= small ? temp : small);
+		index = (temp <= small ? i : index);
 		//printf ("%d %lf %lf\n", index, small, ave);
 	}
 
-	for (i = 0; i < num; i++)
+	for (i = 0; i < num_off; i++)
 	{
 		if ((index+i) > n-1)
 		{
@@ -146,13 +162,15 @@ int off_pulse (int nphase, double *in, double *out, double frac)
 	return 0;
 }
 
-int remove_baseline (double *in, double frac_off, int n, double *out)
+int remove_baseline (double *in, double frac_off, double frac_on, int n, double *out)
 {
 	// define the off_pulse range of std, frac_off is the fraction of the phase
 	int num_off = (int)(n*frac_off);
 	double off_0[num_off];
 
-	off_pulse(n, in, off_0, frac_off);
+	int peak_position;
+	find_peak (n, in, &peak_position);
+	off_pulse(n, peak_position, in, off_0, frac_off, frac_on);
 
 	// normalize std
 	int i;
@@ -176,14 +194,16 @@ int remove_baseline (double *in, double frac_off, int n, double *out)
 	return 0;
 }
 
-int error (double *p_off, double *s_on, double ro, double snr, int num_on, int num_off, double *err)
+int error (double *p_off, double *s_on, double scale, double ro, double snr, int num_on, int num_off, double *err)
 {
 	int i;
     double s_bar=0.0;
     
+	double s_scaled[num_on];
     for (i = 0; i < num_on; i++)
     {
-        s_bar += s_on[i];
+		s_scaled[i] = scale*s_on[i];
+        s_bar += s_scaled[i];
     }
 
     s_bar=s_bar/num_on;
@@ -213,11 +233,21 @@ int error (double *p_off, double *s_on, double ro, double snr, int num_on, int n
 	ro21 = 0.0;
     for (i = 0; i < num_on; i++)
     {
-        ro21 += (s_on[i] - s_bar)*(s_on[i] - s_bar);
+        ro21 += (s_scaled[i] - s_bar)*(s_scaled[i] - s_bar);
     }
 
 	double chi;
 	chi = sigma*sigma/ro21;
+
+	double d_ro;
+	if ( snr > 100.0 )
+	{
+		d_ro = chi*sqrt((num_on-1.0)/(2.0*num_on*num_on));
+	}
+	else
+	{
+		d_ro = sqrt(chi/(num_on*(1.0+chi)));
+	}	
 	
 	double partial_ro;
 	partial_ro = snr/(2.0*sqrt(1.0-ro));
@@ -228,7 +258,7 @@ int error (double *p_off, double *s_on, double ro, double snr, int num_on, int n
 	double d_snr;
 	d_snr = sigma/sqrt(2.0*num_on);
 
-	(*err) = sqrt(partial_ro*partial_ro*chi*chi + partial_snr*partial_snr*d_snr*d_snr);
+	(*err) = sqrt(partial_ro*partial_ro*d_ro*d_ro + partial_snr*partial_snr*d_snr*d_snr);
 
 	return 0;
 }
@@ -239,8 +269,8 @@ int shape_para (double *s, double *p, int nphase, double frac_on, double frac_of
 	
 	// remove the baseline
 	double s_nobase[n], p_nobase[n];
-	remove_baseline (s, frac_off, n, s_nobase);
-	remove_baseline (p, frac_off, n, p_nobase);
+	remove_baseline (s, frac_off, frac_on, n, s_nobase);
+	remove_baseline (p, frac_off, frac_on, n, p_nobase);
 
 	// find the peak and peak position
 	int s_peak_position, p_peak_position;
@@ -270,8 +300,8 @@ int shape_para (double *s, double *p, int nphase, double frac_on, double frac_of
 	int num_off = (int)(n*frac_off);
 	double s_off[num_off], p_off[num_off];
 
-	off_pulse(n, s_norm, s_off, frac_off);
-	off_pulse(n, p_nobase, p_off, frac_off);
+	off_pulse(n, s_peak_position, s_norm, s_off, frac_off, frac_on);
+	off_pulse(n, p_peak_position, p_nobase, p_off, frac_off, frac_on);
 
 	// define the on_pulse range, frac_on is the fraction of the phase
 	int num_on = (int)(n*frac_on);
@@ -280,7 +310,8 @@ int shape_para (double *s, double *p, int nphase, double frac_on, double frac_of
 	on_pulse(n, s_peak_position, s_norm, s_on, frac_on);
 	on_pulse(n, p_peak_position, p_nobase, p_on_0, frac_on);
 
-	get_toa (s_on, p_on_0, p_on, psrfreq, num_on, mjd, nchn, npol, nsub, fname);
+	double scale;
+	get_toa (s_on, p_on_0, p_on, &scale, psrfreq, num_on, mjd, nchn, npol, nsub, fname);
 	//printf ("///////////////////\n");
 
 	/*
@@ -405,11 +436,11 @@ int shape_para (double *s, double *p, int nphase, double frac_on, double frac_of
     double shape_para_test = p_peak*sqrt(num_on/(2.0*ro22));
 
 	double err;
-	error (p_off, s_on, ro, SNR, num_on, num_off, &err);
+	error (p_off, s_on, scale, ro, SNR, num_on, num_off, &err);
     //fprintf (fp, "The shape parameter is: %f\n", shape_para);
     //fprintf (fp, "The theoretical shape parameter is: %f\n", shape_para_std);
     //fprintf (fp, "%lf %lf %.10lf\n", shape_para_std, shape_para, err);
-    fprintf (fp, "%ld %d %d %.3lf %.3lf %.3lf %.10lf\n", mjd, nchn, npol, shape_para_std, shape_para, shape_para_test, err);
+    fprintf (fp, "%s %ld %d %d %.3lf %.3lf %.3lf %.10lf\n", fname, mjd, nchn, npol, shape_para_std, shape_para, shape_para_test, err);
 
     return 0;
 }

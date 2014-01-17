@@ -271,7 +271,7 @@ int inverse_dft (double *real_p, double *ima_p, int ncount, double *p_new)
 	return 0;
 }
 
-int get_toa (double *s, double *p, double *p_new, double psrfreq, int nphase, long int mjd, int nchan, int npol, int nsub, char *fname)
+int get_toa (double *s, double *p, double *p_new, double *scale, double psrfreq, int nphase, long int mjd, int nchan, int npol, int nsub, char *fname)
 // calculate the phase shift between template and simulated (or real) data 
 // error of phase can be calculated
 // initial guess of phase shift is added
@@ -338,6 +338,7 @@ int get_toa (double *s, double *p, double *p_new, double psrfreq, int nphase, lo
     //phase=zbrent(A7, -1.0, 1.0, 1.0e-16);
     //phase=zbrent(A7, -0.005, 0.005, 1.0e-16);
     b=A9(phase, amp_s, amp_p, phi_s, phi_p, k, nchn);
+	(*scale) = b;
 
 	double a;
     a = (amp_p[0][0]-b*amp_s[0][0])/nphase;

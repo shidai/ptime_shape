@@ -35,11 +35,11 @@ int find_peak (int n, double *s, int *position);
 double find_peak_value (int n, double *s);
 
 int on_pulse (int nphase, int peak_position, double *in, double *out, double frac);
-int off_pulse (int nphase, double *in, double *out, double frac);
+int off_pulse (int nphase, int peak_position, double *in, double *out, double frac_off, double frac_on);
 
-int remove_baseline (double *in, double frac_off, int n, double *out);
+int remove_baseline (double *in, double frac_off, double frac_on, int n, double *out);
 
-int error (double *p_off, double *s_on, double ro, double snr, int num_on, int num_off, double *err);
+int error (double *p_off, double *s_on, double scale, double ro, double snr, int num_on, int num_off, double *err);
 int shape_para (double *s, double *p, int nphase, double frac_on, double frac_off, FILE *fp, double psrfreq, long int mjd, int nchn, int npol, int nsub, char *fname);
 
 int real_obs (char *fname, char *tname, char *oname, int mode, FILE *fp, double frac_on, double frac_off);
@@ -63,4 +63,4 @@ int inverse_dft (double *real_p, double *ima_p, int ncount, double *p_new);
 
 int align (int N, double phase, double b, double a, double *real_p, double *real_p_align, double *ima_p, double *ima_p_align);
 
-int get_toa (double *s, double *p, double *p_new, double psrfreq, int nphase, long int mjd, int nchn, int npol, int nsub, char *fname);
+int get_toa (double *s, double *p, double *p_new, double *scale, double psrfreq, int nphase, long int mjd, int nchn, int npol, int nsub, char *fname);
