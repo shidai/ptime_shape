@@ -55,9 +55,10 @@ double read_psrfreq ( char *name )
 	
 	char freq[100];
 	char F0[100];
+	double a[10];
 
 	int colnum = 1;
-    int frow = 6;
+    int frow;
     int	felem = 1;
     int nelem = 1;
     int	anynull = 0;
@@ -67,46 +68,45 @@ double read_psrfreq ( char *name )
 	line = (char **)malloc(sizeof(char *));
 	line[0] = (char *)malloc(sizeof(char)*1024);
 
-	fits_read_col(fptr, TSTRING, colnum, frow, felem, nelem, nval, line, &anynull, &status);           // read the column
-
-	//puts(line[0]);
-
-	int nchar = strlen(line[0]);
-	//printf("strlen %d\n", nchar);
-
-	int i;
-	for (i = 0; i < nchar; i++)
+	for (frow = 1; frow < 20; frow++)
 	{
-		F0[i] = line[0][i];
-	}
-	//printf("F0 %s\n", F0);
+		fits_read_col(fptr, TSTRING, colnum, frow, felem, nelem, nval, line, &anynull, &status);           // read the column
 
-	double a[10];
-	int l = 0;
-	int j = 0;
-	for (i = 0; i < nchar; i++)
-	{
-		if( (F0[i] >= '0' && F0[i] <= '9') || F0[i] =='.' ) 
-		{ 
-			freq[l] = F0[i];
-			l++;
-		}
-		else if(l > 0)
+		//puts(line[0]);
+
+		int nchar = strlen(line[0]);
+		//printf("strlen %d\n", nchar);
+
+		if (line[0][0] == 'F' && line[0][1] == '0')
 		{
-			freq[l] = '\0';
-			a[j]=atof(freq);
-			j++;
-			l=0;
+			int i;
+			for (i = 0; i < nchar; i++)
+			{
+				F0[i] = line[0][i];
+			}
+			//printf("F0 %s\n", F0);
+
+			int l = 0;
+			int j = 0;
+			for (i = 0; i < nchar; i++)
+			{
+				if( (F0[i] >= '0' && F0[i] <= '9') || F0[i] =='.' ) 
+				{ 
+					freq[l] = F0[i];
+					l++;
+				}
+				else if(l > 0)
+				{
+					freq[l] = '\0';
+					a[j]=atof(freq);
+					j++;
+					l=0;
+				}
+			}
+			break;
 		}
 	}
 
-	/*
-	for(i = 0; i < j; i++)
-	{
-        printf("%.15lf\n", a[i]);
-	}
-	*/
- 
 	double psrfreq;
 	psrfreq = a[1];
 
@@ -422,13 +422,16 @@ int read_prof ( char *name, int subint, double *profile, int nphase, int npol, i
 	read_scl (name, subint, scl, nchan, npol);
 
 	int i,j,h;
-    for (i = 0; i < nchan; i++)                             // print the results
+    for (i = 0; i < npol; i++)                             // print the results
+    //for (i = 0; i < nchan; i++)                             // print the results
 	{
-		for (h = 0; h < npol; h++)                             // print the results
+		for (h = 0; h < nchan; h++)                             // print the results
+		//for (h = 0; h < npol; h++)                             // print the results
 		{
 			for (j = 0; j < nphase; j++)                             // print the results
 			{
-				profile[i*npol*nphase+h*nphase+j] = value[i*npol*nphase+h*nphase+j]*scl[i*npol+h] + offs[i*npol+h];
+				profile[i*nchan*nphase+h*nphase+j] = value[i*nchan*nphase+h*nphase+j]*scl[i*nchan+h] + offs[i*nchan+h];
+				//profile[i*npol*nphase+h*nphase+j] = value[i*npol*nphase+h*nphase+j]*scl[i*npol+h] + offs[i*npol+h];
 				//profile[i*nphase+j] = value[i*nphase+j];
 				//printf("%d %lf \n", i, profile[i]);
 			}
@@ -590,8 +593,9 @@ int read_std_pt ( char *name, double *profile, int nphase, int nchn, int npol)
 	readTemplate_ptime(name,&tmpl);
     printf("Complete reading template\n");
 
-	int npola;
+	int npola, nchan;
 	npola = tmpl.channel[0].nstokes;
+	nchan = tmpl.nchan;
 
 	if ( npola != npol)
 	{
@@ -601,19 +605,21 @@ int read_std_pt ( char *name, double *profile, int nphase, int nchn, int npol)
 
 	int i,j,h;
 	double phi;
-	for (i = 0; i < tmpl.nchan; i++)
+	for (i = 0; i < npol; i++)
+	//for (i = 0; i < tmpl.nchan; i++)
 	{
-		for (h = 0; h < npol; h++)
+		for (h = 0; h < nchan; h++)
+		//for (h = 0; h < npol; h++)
 		{
 			for (j = 0; j < nphase; j++)
 			{
 				phi = j/(double)nphase;
-				profile[i*npol*nphase+h*nphase+j] = (double)evaluateTemplateChannel(&tmpl,phi,i,h,0);
+				profile[i*nchan*nphase+h*nphase+j] = (double)evaluateTemplateChannel(&tmpl,phi,h,i,0);
 			}
 		}
 	}
 
-	if ( tmpl.nchan == 1 )
+	if ( nchan == 1 )
 	{
 		for (i = 1; i < nchn; i++)
 		{

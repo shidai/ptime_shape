@@ -13,27 +13,27 @@ int find_peak (int n, double *s, int *position)
 	double temp[n];
 	double peak;
 
-	for (i=0;i<n;i++)
+	for (i = 0; i < n; i++)
 	{
-		temp[i]=s[i];
+		temp[i] = s[i];
 	}
 
-	double a,b,c;
-	for (i=0;i<n-1;i++)
+	double a, b, c;
+	for (i = 0; i < n-1; i++)
 	{
-		a=temp[i];
-		b=temp[i+1];
-		c=(a>=b ? a : b);
+		a = fabs(temp[i]);
+		b = fabs(temp[i+1]);
+		c = (a >= b ? a : b);
 
-		temp[i+1]=c;
+		temp[i+1] = c;
 	}
-	peak=temp[n-1];
+	peak = temp[n-1];
 
-	for (i=0;i<n;i++)
+	for (i = 0; i < n; i++)
 	{
-		if (fabs(peak-s[i])<1.0e-3)
+		if (fabs(peak-fabs(s[i])) < 1.0e-3)
 		{
-			(*position)=i;
+			(*position) = i;
 		}
 	}
 
@@ -45,26 +45,28 @@ double find_peak_value (int n, double *s)
 	int i;
 	double temp[n];
 
-	for (i=0;i<n;i++)
+	for (i = 0; i < n; i++)
 	{
-		temp[i]=s[i];
+		temp[i] = s[i];
 	}
 
-	double a,b,c;
-	for (i=0;i<n-1;i++)
+	double a, b, c;
+	for (i = 0; i < n-1; i++)
 	{
-		a=temp[i];
-		b=temp[i+1];
-		c=(a>=b ? a : b);
+		//a = temp[i];
+		//b = temp[i+1];
+		a = fabs(temp[i]);
+		b = fabs(temp[i+1]);
+		c = (fabs(a) >= fabs(b) ? a : b);
 
-		temp[i+1]=c;
+		temp[i+1] = c;
 	}
 
 	return temp[n-1];
 }
 
 int on_pulse (int nphase, int peak_position, double *in, double *out, double frac)
-// define the on_pulse range, 50% of the phase
+// define the on_pulse range, frac_on of the phase
 {
 	int n = nphase;
 	int num = (int)(n*frac);
@@ -107,7 +109,7 @@ int off_pulse (int nphase, double *in, double *out, double frac)
 			{
 				small += in[j];
 			}
-			small = small/num;
+			small = fabs(small/num);
 		}
 			
 		ave = 0.0;
@@ -122,7 +124,7 @@ int off_pulse (int nphase, double *in, double *out, double frac)
 				ave += in[i+j];
 			}
 		}
-		ave = ave/num;
+		ave = fabs(ave/num);
 
 		small = (ave <= small ? ave : small);
 		index = (ave <= small ? i : index);
@@ -174,7 +176,7 @@ int remove_baseline (double *in, double frac_off, int n, double *out)
 	return 0;
 }
 
-int error (double *p_off, double *s_on, int num_on, int num_off, double *err)
+int error (double *p_off, double *s_on, double ro, double snr, int num_on, int num_off, double *err)
 {
 	int i;
     double s_bar=0.0;
@@ -217,7 +219,16 @@ int error (double *p_off, double *s_on, int num_on, int num_off, double *err)
 	double chi;
 	chi = sigma*sigma/ro21;
 	
-	(*err) = chi*sqrt((num_on-1.0)/(2.0*num_on*num_on));
+	double partial_ro;
+	partial_ro = snr/(2.0*sqrt(1.0-ro));
+
+	double partial_snr;
+	partial_snr = sqrt(1.0-ro);
+
+	double d_snr;
+	d_snr = sigma/sqrt(2.0*num_on);
+
+	(*err) = sqrt(partial_ro*partial_ro*chi*chi + partial_snr*partial_snr*d_snr*d_snr);
 
 	return 0;
 }
@@ -237,6 +248,8 @@ int shape_para (double *s, double *p, int nphase, double frac_on, double frac_of
 	
 	s_peak = find_peak_value (n, s_nobase);
 	p_peak = find_peak_value (n, p_nobase);
+	printf ("s_peak: %lf\n", s_peak);
+	printf ("p_peak: %lf\n", p_peak);
 
 	find_peak (n, s_nobase, &s_peak_position);
 	find_peak (n, p_nobase, &p_peak_position);
@@ -392,7 +405,7 @@ int shape_para (double *s, double *p, int nphase, double frac_on, double frac_of
     double shape_para_test = p_peak*sqrt(num_on/(2.0*ro22));
 
 	double err;
-	error (p_off, s_on, num_on, num_off, &err);
+	error (p_off, s_on, ro, SNR, num_on, num_off, &err);
     //fprintf (fp, "The shape parameter is: %f\n", shape_para);
     //fprintf (fp, "The theoretical shape parameter is: %f\n", shape_para_std);
     //fprintf (fp, "%lf %lf %.10lf\n", shape_para_std, shape_para, err);
@@ -483,21 +496,23 @@ int real_obs (char *fname, char *tname, char *oname, int mode, FILE *fp, double 
 			//readfile(argv[2],&n,tt,p_multi);
 
 			// start to calculate shape parameter for different channels
-			for (i = 0; i < nchn; i++)
+			for (i = 0; i < npol; i++)
+			//for (i = 0; i < nchn; i++)
 			{
-				for (p = 0; p < npol; p++)
+				for (p = 0; p < nchn; p++)
+				//for (p = 0; p < npol; p++)
 				{
 					for (j = 0; j < nphase; j++)
 					{
 						//printf ("%lf %lf\n", p_multi[j], s[j]);
 						//s_multi[i*nphase + j] = s[j];
-						p_temp[j] = p_multi[i*npol*nphase + p*nphase + j];
-						s_temp[j] = s_multi[i*npol*nphase + p*nphase + j];
+						p_temp[j] = p_multi[i*nchn*nphase + p*nphase + j];
+						s_temp[j] = s_multi[i*nchn*nphase + p*nphase + j];
 						//s_temp[j] = s_multi[i*nphase + j];
 						//fprintf (fp, "%d %d %lf\n", i, j, p_temp[j]);
 					}
 					//get_toa (s_temp, p_temp, p_new, psrfreq, nphase);
-					shape_para(s_temp, p_temp, nphase, frac_on, frac_off, fp, psrfreq, imjd, i, p, h, fname);
+					shape_para(s_temp, p_temp, nphase, frac_on, frac_off, fp, psrfreq, imjd, p, i, h, fname);
 				}
 			}
 		}

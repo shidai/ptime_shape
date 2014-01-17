@@ -1,6 +1,6 @@
 NAME: ptime_shape, to calculate the shape parameter
 AUTHOR: SHI DAI
-VERSION: 2.0 16-JAN-2014
+VERSION: 3.0 16-JAN-2014
 		 
 INPUT: fname, tname, oname, frac_on, frac_off
 	   fname: the name of data file, PSRFITS format
@@ -9,7 +9,9 @@ INPUT: fname, tname, oname, frac_on, frac_off
 	   frac_on: fraction of on-pulse phase
 	   frac_off: fraction of off-pulse phase
 
-OUTPUT: ("%.3lf %.3lf %.3lf %.8lf\n", shape_para_std, shape_para, shape_para_test, err)
+OUTPUT: in oname ("%.3lf %.3lf %.3lf %.8lf\n", shape_para_std, shape_para, shape_para_test, err)
+        in fname_mjd_nsub_1_nchn_1_npol_1 ("%d %lf %lf %lf %lf %lf \n", i, s[i], p_new[i], p[i], a, b)
+
 
 To compile: sh run.sh (fftw3 and cfitsio needed; currently, simulation function has been turn off, otherwise, gsl needed)
 

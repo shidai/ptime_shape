@@ -165,7 +165,7 @@ double zbrent(double (*func)(double phase, double a_s[][NP], double a_p[][NP], d
 	return 0.0;
 }
 
-int align (int N, double phase, double b, double *real_p, double *real_p_align, double *ima_p, double *ima_p_align)
+int align (int N, double phase, double b, double a, double *real_p, double *real_p_align, double *ima_p, double *ima_p_align)
 {
 	// k is the dimention of amp, N is the dimention of s
 	int i;
@@ -182,10 +182,10 @@ int align (int N, double phase, double b, double *real_p, double *real_p_align, 
 		// add phase shift to the profile, phase
 		//real_p_align[i]=amp*(cosina)/b;
 		//ima_p_align[i]=amp*(sina)/b;
-		//real_p_align[i]=amp*(cosina*cos(-i*phase)-sina*sin(-i*phase));
-		//ima_p_align[i]=amp*(sina*cos(-i*phase)+cosina*sin(-i*phase));
-		real_p_align[i]=amp*(cosina*cos(-i*phase)-sina*sin(-i*phase))/b;
-		ima_p_align[i]=amp*(sina*cos(-i*phase)+cosina*sin(-i*phase))/b;
+		real_p_align[i]=amp*(cosina*cos(-i*phase)-sina*sin(-i*phase));
+		ima_p_align[i]=amp*(sina*cos(-i*phase)+cosina*sin(-i*phase));
+		//real_p_align[i]=amp*(cosina*cos(-i*phase)-sina*sin(-i*phase))/b;
+		//ima_p_align[i]=amp*(sina*cos(-i*phase)+cosina*sin(-i*phase))/b;
 		
 	}
 
@@ -338,16 +338,21 @@ int get_toa (double *s, double *p, double *p_new, double psrfreq, int nphase, lo
     //phase=zbrent(A7, -1.0, 1.0, 1.0e-16);
     //phase=zbrent(A7, -0.005, 0.005, 1.0e-16);
     b=A9(phase, amp_s, amp_p, phi_s, phi_p, k, nchn);
-    //a=A4(b);
+
+	double a;
+    a = (amp_p[0][0]-b*amp_s[0][0])/nphase;
 	
 	printf ("phase shift: %.10lf\n", ((phase/3.1415926)/(psrfreq*2.0))*1.0e+6);  // microseconds
+	printf ("phase shift: %.10lf\n", phase);  // microseconds
+	printf ("b: %lf\n", b);  // microseconds
+	printf ("a: %lf\n", a);  // microseconds
 	//printf ("%.10lf %.10lf\n", ((phase/3.1415926)*4.569651/2.0)*1.0e+3, ((errphase/3.1415926)*4.569651/2.0)*1.0e+3);  // microseconds
 	//printf ("errphase %.10lf \n", ((errphase/3.1415926)*5.75/2.0)*1.0e+6);
 	//printf ("errb %.10lf \n", errb);
 	
 	// align profile and template
 	double real_p_align[nphase/2+1], ima_p_align[nphase/2+1];
-	align (nphase, phase, b, real_p, real_p_align, ima_p, ima_p_align);
+	align (nphase, phase, b, a, real_p, real_p_align, ima_p, ima_p_align);
 	inverse_dft (real_p_align, ima_p_align, nphase, p_new);
 
 	// open file to write toa 
@@ -383,7 +388,7 @@ int get_toa (double *s, double *p, double *p_new, double psrfreq, int nphase, lo
 	int i;
 	for (i = 0; i < nphase; i++)
 	{
-		fprintf (fp, "%d %lf %lf\n", i, s[i], p_new[i]);
+		fprintf (fp, "%d %lf %lf %lf %lf %lf \n", i, s[i], p_new[i], p[i], a, b);
 	}
 
     if (fclose (fp) != 0)
