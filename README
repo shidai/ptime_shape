@@ -2,23 +2,21 @@ NAME: ptime_shape, to calculate the shape parameter
 AUTHOR: SHI DAI
 VERSION: 3.0 16-JAN-2014
 		 
-INPUT: fname, tname, oname, frac_on, frac_off
+INPUT: fname, tname, frac_on, frac_off
 	   fname: the name of data file, PSRFITS format
 	   tname: the template, in PSRFITS format (-std) or ptime format (-pt)
-	   oname: output file name
 	   frac_on: fraction of on-pulse phase
 	   frac_off: fraction of off-pulse phase
 
-OUTPUT: in oname ("%.3lf %.3lf %.3lf %.8lf\n", shape_para_std, shape_para, shape_para_test, err)
-        in fname_mjd_nsub_1_nchn_1_npol_1 ("%d %lf %lf %lf %lf %lf \n", i, s[i], p_new[i], p[i], a, b)
+OUTPUT: in shape_fname_nsub_num1_nchn_num2_npol_num3: "%s %ld %d %d %d %.3lf %.3lf %.10lf %.3lf\n", fname, mjd, nsub, nchn, npol, shape_para_std, shap		  e_para, err, shape_para_test)
+        in profile_fname_mjd_nsub_num1_nchn_num2_npol_num3 ("%d %lf %lf %lf %lf %lf \n", i, s[i], p_new[i], p[i], a, b)
 
 
 To compile: sh run.sh (fftw3 and cfitsio needed; currently, simulation function has been turn off, otherwise, gsl needed)
 
-Usage: ptime_shape -f fname -std tname (-pt tname) -o oname -frac_on 0.5 -frac_off 0.5
-		-fname: data file; 
+Usage: ./ptime_shape.out -f fname -std tname (-pt tname) -frac_on 0.5 -frac_off 0.5
+		-fname: data file, using "...*..." to analyze multiple files; 
 		-tname: templates; 
-		-oname: output; 
 		-std: standard template format; 
 		-pt: ptime template;
 		-frac_on: fraction of the on-pulse phase; 

@@ -357,6 +357,7 @@ int get_toa (double *s, double *p, double *p_new, double *scale, double psrfreq,
 	inverse_dft (real_p_align, ima_p_align, nphase, p_new);
 
 	// open file to write toa 
+	char head[] = "profile_";
 	char channel[] = "_nchn_";
 	char pol[] = "_npol_";
 	char sub[] = "_nsub_";
@@ -369,7 +370,8 @@ int get_toa (double *s, double *p, double *p_new, double *scale, double psrfreq,
 	sprintf (c3, "%d", nchan);
 	sprintf (c4, "%d", npol);
 
-	strcpy(output, fname);
+	strcpy(output, head);
+	strcat(output, fname);
 	strcat(output, "_");
 	strcat(output, c1);
 	strcat(output, sub);

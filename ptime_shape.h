@@ -42,7 +42,8 @@ int remove_baseline (double *in, double frac_off, double frac_on, int n, double 
 int error (double *p_off, double *s_on, double scale, double ro, double snr, int num_on, int num_off, double *err);
 int shape_para (double *s, double *p, int nphase, double frac_on, double frac_off, FILE *fp, double psrfreq, long int mjd, int nchn, int npol, int nsub, char *fname);
 
-int real_obs (char *fname, char *tname, char *oname, int mode, FILE *fp, double frac_on, double frac_off);
+int real_obs (char *fname, char *tname, int mode, double frac_on, double frac_off);
+//int real_obs (char *fname, char *tname, char *oname, int mode, FILE *fp, double frac_on, double frac_off);
 
 //int simulate (int n, double SNR, double *s, double *p);
 //int sim_obs (char *tname, char *oname, int mode, double SNR, FILE *fp, double psrfreq);

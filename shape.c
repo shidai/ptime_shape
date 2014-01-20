@@ -440,12 +440,13 @@ int shape_para (double *s, double *p, int nphase, double frac_on, double frac_of
     //fprintf (fp, "The shape parameter is: %f\n", shape_para);
     //fprintf (fp, "The theoretical shape parameter is: %f\n", shape_para_std);
     //fprintf (fp, "%lf %lf %.10lf\n", shape_para_std, shape_para, err);
-    fprintf (fp, "%s %ld %d %d %.3lf %.3lf %.3lf %.10lf\n", fname, mjd, nchn, npol, shape_para_std, shape_para, shape_para_test, err);
+    fprintf (fp, "%s %ld %d %d %d %.3lf %.3lf %.10lf %.3lf\n", fname, mjd, nsub, nchn, npol, shape_para_std, shape_para, err, shape_para_test);
 
     return 0;
 }
 
-int real_obs (char *fname, char *tname, char *oname, int mode, FILE *fp, double frac_on, double frac_off)
+int real_obs (char *fname, char *tname, int mode, double frac_on, double frac_off)
+//int real_obs (char *fname, char *tname, char *oname, int mode, FILE *fp, double frac_on, double frac_off)
 {
 	// name of different extension of data files
 	char name_data[50]; 
@@ -542,8 +543,42 @@ int real_obs (char *fname, char *tname, char *oname, int mode, FILE *fp, double 
 						//s_temp[j] = s_multi[i*nphase + j];
 						//fprintf (fp, "%d %d %lf\n", i, j, p_temp[j]);
 					}
+
+					// open file to write toa 
+					char head[] = "shape_";
+					char sub[] = "_nsub_";
+					char channel[] = "_nchn_";
+					char pol[] = "_npol_";
+					char c1[10], c2[10], c3[10]; 
+
+					char output[100];
+
+					sprintf (c1, "%d", h);
+					sprintf (c2, "%d", p);
+					sprintf (c3, "%d", i);
+
+					strcpy(output, head);
+					strcat(output, fname);
+					strcat(output, sub);
+					strcat(output, c1);
+					strcat(output, channel);
+					strcat(output, c2);
+					strcat(output, pol);
+					strcat(output, c3);
+
+					FILE *fp;
+					if ((fp = fopen(output, "a+")) == NULL)
+					{
+						fprintf (stdout, "Can't open file\n");
+						exit(1);
+					}
+
 					//get_toa (s_temp, p_temp, p_new, psrfreq, nphase);
 					shape_para(s_temp, p_temp, nphase, frac_on, frac_off, fp, psrfreq, imjd, p, i, h, fname);
+
+					if (fclose (fp) != 0)
+						fprintf (stderr, "Error closing\n");
+
 				}
 			}
 		}
