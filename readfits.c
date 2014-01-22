@@ -84,11 +84,12 @@ double read_psrfreq ( char *name )
 			{
 				F0[i] = line[0][i];
 			}
+			F0[nchar] = '\0';
 			//printf("F0 %s\n", F0);
 
 			int l = 0;
 			int j = 0;
-			for (i = 0; i < nchar; i++)
+			for (i = 0; i < nchar+1; i++)
 			{
 				if( (F0[i] >= '0' && F0[i] <= '9') || F0[i] =='.' ) 
 				{ 
